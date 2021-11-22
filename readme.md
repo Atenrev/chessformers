@@ -20,6 +20,7 @@ cd chessformers
 
 ### 2. Data
 * Download the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games). Put it in a dataset folder inside the root folder.
+* Run ```process_kaggle.py``` to pre-process the dataset.
 
 You can also use your own dataset. In that case, you should adapt the ```dataset.py``` script accordingly.
 

@@ -10,7 +10,6 @@ import re
 
 
 if __name__ == "__main__":
-    os.makedirs("dataset/kaggle2/", exist_ok=True)
     vocab_counter = set()
 
     with open(f"dataset/processed_kaggle2.txt", "w", encoding="utf-8") as outf:
