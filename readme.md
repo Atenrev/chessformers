@@ -7,6 +7,7 @@ This is a PyTorch implementation of [our future awesome paper]().
 
 ## Prerequisites
 * PyTorch
+* chess
 
 
 ## Installation
