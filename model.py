@@ -142,6 +142,8 @@ class Transformer(nn.Module):
 
         if stop_at_next_move:
             max_length = 1
+        else: 
+            max_length -= len(input_sequence)
 
         for _ in range(max_length):
             src_mask = self.get_src_mask(y_input.size(0)).to("cpu")
