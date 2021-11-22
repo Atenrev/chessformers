@@ -19,7 +19,7 @@ cd chessformers
 ```
 
 ### 2. Data
-* Download the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games). Put it in a dataset folder inside the root folder.
+* Download the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games). Put it in a "dataset" folder inside the root folder and rename the txt file to ```kaggle2.txt```.
 * Run ```process_kaggle.py``` to pre-process the dataset.
 
 You can also use your own dataset. In that case, you should adapt the ```dataset.py``` script accordingly.
@@ -38,8 +38,9 @@ Here is an example of what the root should look like:
 ├── process_kaggle.py
 ├── model\
 |   └── chessformer_epoch_13.pth
-└── tiny_imagenet\
-    └── all_with_filtered_anotations_since1998.txt
+└── dataset\
+    ├── processed_kaggle2.txt
+    └── kaggle2.txt
 ```
 
 ## Train
