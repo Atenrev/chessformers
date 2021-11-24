@@ -64,6 +64,7 @@ class Transformer(nn.Module):
         # INFO
         self.model_type = "Transformer"
         self.dim_model = dim_model
+        self.n_positions = n_positions
 
         # LAYERS
         self.positional_encoder = PositionalEncoding(
@@ -117,7 +118,8 @@ class Transformer(nn.Module):
     def predict(
         self,
         input_string: str = "<bos>",
-        max_length=80, stop_at_next_move=False, 
+        max_length=80, 
+        stop_at_next_move=False, 
         temperature=0.5
     ) -> str:
         import chess
@@ -128,8 +130,6 @@ class Transformer(nn.Module):
         input_sequence = self.tokenizer.encode(
             input_string, add_bos_token=False)
 
-        assert len(input_sequence) < max_length
-
         for token in input_string.split(" ")[1:]:
             board.push_san(token)
 
@@ -138,7 +138,6 @@ class Transformer(nn.Module):
 
         y_input = torch.tensor(
             [input_sequence], dtype=torch.long, device="cpu").t()
-        self.num_tokens = len(input_sequence)
 
         if stop_at_next_move:
             max_length = 1
@@ -146,11 +145,21 @@ class Transformer(nn.Module):
             max_length -= len(input_sequence)
 
         for _ in range(max_length):
-            src_mask = self.get_src_mask(y_input.size(0)).to("cpu")
-            pad_mask = self.get_pad_mask(
-                y_input, self.tokenizer.pad_token_index).to("cpu")
+            y_size = y_input.size(0)
+            begin_loc = max(y_size - self.n_positions, 0)
 
-            pred = self.forward(y_input, src_mask, pad_mask)
+            if y_size > self.n_positions and begin_loc % 2 != 0:
+                # Let's help the model know what turn it is
+                begin_loc += 1
+
+            end_loc = min(begin_loc + self.n_positions, y_size)
+            input_ids = y_input[begin_loc:end_loc]
+            
+            src_mask = self.get_src_mask(input_ids.size(0)).to("cpu")
+            pad_mask = self.get_pad_mask(
+                input_ids, self.tokenizer.pad_token_index).to("cpu")
+
+            pred = self.forward(input_ids, src_mask, pad_mask)
 
             word_weights = pred[-1].squeeze().div(temperature).exp()
             word_idx = torch.multinomial(word_weights, 10)
@@ -165,7 +174,9 @@ class Transformer(nn.Module):
                     continue
 
             if word_idx.ndim > 0:
-                # If the model doesn't what to move, surrenders
+                # If the model doesn't know what to move, surrenders
+                next_item = torch.tensor([[self.tokenizer.eos_token_index]], device="cpu")
+                y_input = torch.cat((y_input, next_item), dim=0)
                 break
 
             next_item = torch.tensor([[word_idx]], device="cpu")
@@ -178,6 +189,7 @@ class Transformer(nn.Module):
                 # If it checkmates the opponent, return with <eos>
                 next_item = torch.tensor([[self.tokenizer.eos_token_index]], device="cpu")
                 y_input = torch.cat((y_input, next_item), dim=0)
+                break
 
             # Stop if model predicts end of sentence
             if next_item.view(-1).item() == self.tokenizer.eos_token_index:

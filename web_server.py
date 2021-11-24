@@ -49,7 +49,6 @@ def predict():
             output_moves = model.predict(
                     input_moves, 
                     stop_at_next_move=True, 
-                    max_length=N_POSITIONS,
                     temperature=0.2,
                     )
         except ValueError:

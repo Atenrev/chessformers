@@ -69,15 +69,14 @@ def main(args) -> None:
             input_string = model.predict(
                 input_string, 
                 stop_at_next_move=True, 
-                max_length=N_POSITIONS,
-                temperature=0.7,
+                temperature=0.2,
                 )
             boards.append(input_string)
             print("BLACK MOVE:", input_string.split(" ")[-1])
         except ValueError:
             input_string = prev_input_string
             print("ILLEGAL MOVE. Please, try again.")
-        except:
+        except Exception as e:
             print("UNHANDLED EXCEPTION. Please, try again.")
 
     print("--- Final board ---")
