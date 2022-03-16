@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.transformer import TransformerEncoder, TransformerEncoderLayer
 
-from tokenizer import Tokenizer
+from chessformers.tokenizer import Tokenizer
 
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -39,7 +39,7 @@ class PositionalEncoding(nn.Module):
         pos_encoding = pos_encoding.unsqueeze(0).transpose(0, 1)
         self.register_buffer("pos_encoding", pos_encoding)
 
-    def forward(self, token_embedding: torch.tensor) -> torch.tensor:
+    def forward(self, token_embedding: torch.Tensor) -> torch.Tensor:
         # Residual connection + pos encoding
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
 
@@ -93,7 +93,7 @@ class Transformer(nn.Module):
         nn.init.xavier_uniform_(self.embedding.weight)
         nn.init.xavier_uniform_(self.out.weight)
 
-    def forward(self, src, src_mask=None, src_pad_mask=None) -> torch.tensor:
+    def forward(self, src, src_mask=None, src_pad_mask=None) -> torch.Tensor:
         # Embedding + positional encoding - Out size = (batch_size, sequence length, dim_model)
         src = self.embedding(src) * math.sqrt(self.dim_model)
         src = self.positional_encoder(src)
@@ -109,10 +109,10 @@ class Transformer(nn.Module):
 
         return F.log_softmax(out, dim=-1)
 
-    def get_src_mask(self, sz) -> torch.tensor:
+    def get_src_mask(self, sz) -> torch.Tensor:
         return torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
 
-    def get_pad_mask(self, matrix: torch.tensor, pad_token: int) -> torch.tensor:
+    def get_pad_mask(self, matrix: torch.Tensor, pad_token: int) -> torch.Tensor:
         return (matrix == pad_token).t()
 
     def predict(

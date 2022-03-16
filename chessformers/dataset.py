@@ -2,14 +2,14 @@ import os
 import torch
 from pathlib import Path
 from torch.utils.data import Dataset
-from tokenizer import Tokenizer
+from chessformers.tokenizer import Tokenizer
 
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-class LichessSmallDataset(Dataset):
-    def __init__(self, tokenizer: Tokenizer, path="dataset/processed_kaggle2.txt", n_positions=512):
+class PGNDataset(Dataset):
+    def __init__(self, tokenizer: Tokenizer, path: str, n_positions=512):
         self.n_positions = n_positions
         self.tokenizer = tokenizer
         self.games = []

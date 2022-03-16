@@ -6,37 +6,39 @@ Human plays as white.
 import argparse
 import torch
 
-from model import Transformer
-from tokenizer import Tokenizer
+from chessformers.configuration import get_configuration
+from chessformers.model import Transformer
+from chessformers.tokenizer import Tokenizer
 
 
-def _parse_args() -> object:
+def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Steganography inference parser')
+        description='Chessformers inference parser')
 
-    parser.add_argument('--load_model', type=str,
+    parser.add_argument('--load_model', type=str, default="model/chessformer_epoch_13.pth",
                         help='model to load and do inference')
+    parser.add_argument('--config', type=str, default="configs/default.yaml",
+                        help='location of the configuration file (a yaml)')
+    parser.add_argument('--tokenizer', type=str, default="vocabs/kaggle2_vocab.txt",
+                        help='location of the tokenizer file')
 
     args = parser.parse_args()
     return args
 
 
 def main(args) -> None:
-    N_POSITIONS = 80
-
-    tokenizer = Tokenizer("vocabs/kaggle2_vocab.txt")
-
+    config = get_configuration(args.config)
+    tokenizer = Tokenizer(args.tokenizer)
     model = Transformer(tokenizer,
                         num_tokens=tokenizer.vocab_size(),
-                        dim_model=768,
-                        d_hid=3072,
-                        num_heads=12,
-                        num_layers=12,
-                        dropout_p=0.1,
-                        n_positions=N_POSITIONS,
+                        dim_model=config["model"]["dim_model"],
+                        d_hid=config["model"]["d_hid"],
+                        num_heads=config["model"]["num_heads"],
+                        num_layers=config["model"]["num_layers"],
+                        dropout_p=config["model"]["dropout_p"],
+                        n_positions=config["model"]["n_positions"],
                         )
-    model.load_state_dict(torch.load(
-        "model/chessformer_epoch_13.pth"))  # args.load_model
+    model.load_state_dict(torch.load(args.load_model))
 
     print(
         "===== CHESSFORMERS ENGINE =====\n"
@@ -48,7 +50,7 @@ def main(args) -> None:
     input_string = "<bos>"
     boards = [input_string]
 
-    while (len(input_string.split(" ")) < N_POSITIONS
+    while (len(input_string.split(" ")) < config["model"]["n_positions"]
            and input_string.split(" ")[-1] != tokenizer.eos_token):
         next_move = input("WHITE MOVE: ")
 

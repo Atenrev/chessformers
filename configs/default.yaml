@@ -1,0 +1,7 @@
+model:
+  n_positions: 80
+  dim_model: 768
+  d_hid: 3072
+  num_heads: 12
+  num_layers: 12
+  dropout_p: 0.1

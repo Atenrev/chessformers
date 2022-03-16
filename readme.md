@@ -2,12 +2,13 @@
 ## Description
 This is a PyTorch implementation of [our future awesome paper]().
 
-* The pre-trained model provided was trained on the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games).
+* The pre-trained model provided was trained on the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games) with a limitation of 80 moves per game.
 
 
 ## Prerequisites
 * PyTorch
 * chess
+* Flask (*Only for API service*)
 
 
 ## Installation
@@ -30,12 +31,14 @@ You can also use your own dataset. In that case, you should adapt the ```dataset
 Here is an example of what the root should look like:
 ```
 .
-├── dataset.py
-├── model.py
-├── tokenizer.py
-├── inference.py
 ├── trainer.py
+├── inference.py
+├── web_server.py
 ├── process_kaggle.py
+├── chessformers\
+|   ├── dataset.py
+|   ├── tokenizer.py
+|   └── model.py
 ├── model\
 |   └── chessformer_epoch_13.pth
 └── dataset\
@@ -62,7 +65,9 @@ optional arguments:
 ```
 
 ## Inference (play against the engine)
-Run ```inference.py```:
+You can play against the engine through a [web interface](https://github.com/Atenrev/chessformers-web-interface) by running the ```web_server.py``` script. 
+
+Alternatively, you can play in the console using PGN notation by running ```inference.py```:
 
 ``` sh
 python .\inference.py

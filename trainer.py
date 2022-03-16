@@ -5,15 +5,20 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, random_split
 
-from dataset import LichessSmallDataset
-from model import Transformer
-from tokenizer import Tokenizer
+from chessformers.configuration import get_configuration
+from chessformers.dataset import PGNDataset
+from chessformers.model import Transformer
+from chessformers.tokenizer import Tokenizer
 
 
-def _parse_args() -> object:
+def _parse_args():
     parser = argparse.ArgumentParser(
         description='Chessformers trainer parser')
 
+    parser.add_argument('--config', type=str, default="configs/default.yaml",
+                        help='location of the configuration file (a yaml)')
+    parser.add_argument('--tokenizer', type=str, default="vocabs/kaggle2_vocab.txt",
+                        help='location of the tokenizer file')
     parser.add_argument('--dataset', type=str, default="dataset/processed_kaggle2.txt",
                         help='location of the dataset')
     parser.add_argument('--vocab', type=str, default='./vocab/kaggle2_vocab.txt',
@@ -47,7 +52,7 @@ class Trainer:
     num_epochs: int
 
     def __init__(self,
-                 model: torch.nn.Module,
+                 model: Transformer,
                  train_loader: DataLoader,
                  val_loader: DataLoader,
                  loss_fn: object,
@@ -95,7 +100,8 @@ class Trainer:
             # Standard training
             pred = self.model(y_input, src_mask, pad_mask)
 
-            loss = self.loss_fn(pred.view(-1, self.model.tokenizer.vocab_size()), y_expected)
+            loss = self.loss_fn(
+                pred.view(-1, self.model.tokenizer.vocab_size()), y_expected)
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -120,14 +126,16 @@ class Trainer:
 
                 # Get mask to mask out the next words
                 sequence_length = y_input.size(0)
-                src_mask = self.model.get_src_mask(sequence_length).to(self.device)
+                src_mask = self.model.get_src_mask(
+                    sequence_length).to(self.device)
                 pad_mask = self.model.get_pad_mask(
                     y_input, self.model.tokenizer.pad_token_index).to(self.device)
 
                 # Standard training
                 pred = self.model(y_input, src_mask, pad_mask)
 
-                loss = self.loss_fn(pred.view(-1, self.model.tokenizer.vocab_size()), y_expected)
+                loss = self.loss_fn(
+                    pred.view(-1, self.model.tokenizer.vocab_size()), y_expected)
                 # loss = self.loss_fn(pred.reshape(-1, pred.shape[-1]), y_expected.reshape(-1))
                 total_loss += loss
 
@@ -164,31 +172,30 @@ class Trainer:
 
 def main(args) -> None:
     os.makedirs(args.save_dir, exist_ok=True)
-    N_POSITIONS = 80
-
-    tokenizer = Tokenizer("vocabs/kaggle2_vocab.txt")
+    config = get_configuration(args.config)
+    tokenizer = Tokenizer(args.tokenizer)
 
     # Prepare the data
-    data = LichessSmallDataset(tokenizer, n_positions=N_POSITIONS)
-    # data_len = len(data)
-    # train_len = int(data_len * 0.8)
-    # train_data, val_data = torch.utils.data.random_split(
-    #     data, [train_len, data_len - train_len])
+    data = PGNDataset(tokenizer, args.dataset, n_positions=config["model"]["n_positions"])
+    data_len = len(data)
+    train_len = int(data_len * 0.8)
+    train_data, val_data = random_split(
+        data, [train_len, data_len - train_len])
 
     train_loader = DataLoader(
-        data, batch_size=args.batch_size, shuffle=True)
-    # val_loader = DataLoader(
-    #     val_data, batch_size=args.batch_size, shuffle=True)
+        train_data, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(
+        val_data, batch_size=args.batch_size, shuffle=True)
 
     # Define the model
     model = Transformer(tokenizer,
                         num_tokens=tokenizer.vocab_size(),
-                        dim_model=768,
-                        d_hid=3072,
-                        num_heads=12,
-                        num_layers=12,
-                        dropout_p=0.1,
-                        n_positions=N_POSITIONS,
+                        dim_model=config["model"]["dim_model"],
+                        d_hid=config["model"]["d_hid"],
+                        num_heads=config["model"]["num_heads"],
+                        num_layers=config["model"]["num_layers"],
+                        dropout_p=config["model"]["dropout_p"],
+                        n_positions=config["model"]["n_positions"],
                         )
 
     if args.load_model is not None:
@@ -203,7 +210,7 @@ def main(args) -> None:
     loss_fn = torch.nn.NLLLoss(ignore_index=tokenizer.pad_token_index)
 
     # Trainer
-    trainer = Trainer(model, train_loader, None,
+    trainer = Trainer(model, train_loader, val_loader,
                       loss_fn=loss_fn,
                       save_dir=args.save_dir,
                       learning_rate=args.lr,
