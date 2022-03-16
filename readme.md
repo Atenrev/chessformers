@@ -1,6 +1,6 @@
 # chessformers
 ## Description
-This is a PyTorch implementation of [our future awesome paper]().
+This is a PyTorch implementation of a Transformer Decoder based model that plays chess.
 
 * The pre-trained model provided was trained on the [3.5 Million Chess Games dataset](https://www.kaggle.com/milesh1/35-million-chess-games) with a limitation of 80 moves per game.
 
@@ -61,7 +61,7 @@ optional arguments:
   --lr LR                   learning rate
   --beta1 BETA1             adam beta
   --save_dir SAVE_DIR       save model directory
-  --load_model LOAD_MODEL   model to load and resume trainin
+  --load_model LOAD_MODEL   model to load and resume training
 ```
 
 ## Inference (play against the engine)
